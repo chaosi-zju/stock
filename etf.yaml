@@ -1,0 +1,78 @@
+sh-list:
+  - name: 科创芯片ETF
+    code: 588200
+  - name: 科创50ETF
+    code: 588000
+  - name: 科创ETF
+    code: 588050
+  - name: 中概互联网ETF
+    code: 513050
+  - name: 酒ETF
+    code: 512690
+  - name: 上证50ETF
+    code: 510050
+  - name: 中证500ETF
+    code: 510500
+  - name: 中证1000ETF
+    code: 512100
+  - name: 沪深300ETF
+    code: 510300
+  - name: 光伏ETF
+    code: 515790
+  - name: 中药ETF
+    code: 560080
+  - name: 游戏ETF
+    code: 516010
+  - name: 证券ETF
+    code: 512880
+  - name: 基建50ETF
+    code: 516970
+  - name: 5G通信ETF
+    code: 515050
+  - name: 稀土ETF
+    code: 516780
+  - name: 军工ETF
+    code: 512660
+  - name: 煤炭ETF
+    code: 515220
+  - name: 房地产ETF
+    code: 512200
+  - name: 养殖ETF
+    code: 516760
+  - name: 通信ETF
+    code: 515880
+  - name: 汽车ETF
+    code: 516110
+  - name: 黄金ETF
+    code: 518880
+  - name: 纳指ETF
+    code: 513100
+  - name: 德国ETF
+    code: 513030
+  - name: 银行ETF
+    code: 512800
+sz-list:
+  - name: 创业板ETF
+    code: 159915
+  - name: 中概互联ETF
+    code: 159605
+  - name: 恒生科技ETF
+    code: 159740
+  - name: 恒生医药ETF
+    code: 159892
+  - name: 中证2000ETF
+    code: 159531
+  - name: 创业板50ETF
+    code: 159949
+  - name: 医疗50ETF
+    code: 159847
+  - name: 电池ETF
+    code: 159755
+  - name: 旅游ETF
+    code: 159766
+  - name: 半导体ETF
+    code: 159813
+  - name: 家电ETF
+    code: 159996
+  - name: 豆粕ETF
+    code: 159985
