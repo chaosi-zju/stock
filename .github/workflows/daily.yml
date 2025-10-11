@@ -1,0 +1,94 @@
+name: Daily Job
+on:
+  schedule:
+    # Run this workflow "At 00:10 Beijing Time (UTC 16:10) every day"
+    - cron: '10 16 * * *'
+  push:
+
+jobs:
+  # 第一步：将 Secret 中的用户名解析为矩阵（前置 job）
+  generate-matrix:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Parse usernames from secret
+        id: set-matrix
+        run: |
+          # 从 Secret 读取用户名（英文逗号分隔），转为 JSON 数组
+          USERNAMES="${{ secrets.USERNAMES }}"
+          # 替换逗号为双引号+逗号+双引号，再包裹成 JSON 数组
+          JSON_ARRAY="[\"${USERNAMES//,/\",\"}\"]"
+          # 输出矩阵格式（符合 GitHub Actions 要求）
+          echo "matrix={\"username\":$JSON_ARRAY}" >> $GITHUB_OUTPUT
+
+  # 第二步：执行实际任务（依赖上面生成的矩阵）
+  daily-hjd:
+    needs: generate-matrix  # 依赖矩阵生成 job
+    name: daily hjd
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}  # 使用动态矩阵
+    steps:
+      - name: Calculate Scheduled Time for ${{ matrix.username }}
+        id: calculate_time
+        run: |
+          # 从 Secret 读取用户名列表并解析为数组
+          USERNAMES="${{ secrets.USERNAMES }}"
+          IFS=',' read -ra USERNAME_ARR <<< "$USERNAMES"  # 按逗号分割成数组
+          
+          # 查找当前用户名的索引
+          INDEX=-1
+          for i in "${!USERNAME_ARR[@]}"; do
+            if [[ "${USERNAME_ARR[$i]}" == "${{ matrix.username }}" ]]; then
+                INDEX=$i
+                break
+            fi
+          done
+          
+          # 计算延迟时间（秒）：索引 × 1小时（3600秒）
+          DELAY_SECONDS=$(( INDEX * 3600 ))
+          # 计算目标执行时间（北京时间，UTC+8）
+          TARGET_TIME_BEIJING=$(date -u -d "@$(($(date -u +%s) + DELAY_SECONDS + 8 * 3600))" "+%Y-%m-%d %H:%M:%S")
+          
+          echo "用户名: ${{ matrix.username }}"
+          echo "在列表中的位置: $((INDEX + 1))"
+          echo "计划执行时间 (北京时间): $TARGET_TIME_BEIJING"
+          
+          # 输出延迟秒数供后续步骤使用
+          echo "delay_seconds=$DELAY_SECONDS" >> $GITHUB_OUTPUT
+          echo "user_index=$INDEX" >> $GITHUB_OUTPUT
+
+      - name: Wait until scheduled time
+        run: |
+          echo "等待 ${{ steps.calculate_time.outputs.user_index }} 小时后执行..."
+          sleep ${{ steps.calculate_time.outputs.delay_seconds }}
+          echo "等待结束，开始执行任务。"
+
+      - name: Install Chromium (snap only, avoid conflict)
+        run: |
+          sudo snap install chromium --classic
+
+      - name: Set up Go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'  # 根据你的实际需求调整 Go 版本
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: hjd
+          fetch-depth: 0
+
+      - name: Run auto login
+        env:
+          FORUM_PASSWORD: ${{ secrets.FORUM_PASSWORD }}
+          SECURITY_QUESTION: ${{ secrets.SECURITY_QUESTION }}
+        run: |
+          export FORUM_USERNAME=${{ matrix.username }}
+          export USER_INDEX=${{ steps.calculate_time.outputs.user_index }} 
+          go run ./main.go
+          if [ $? -ne 0 ]; then
+            exit $?
+          fi
