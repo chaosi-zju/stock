@@ -39,10 +39,10 @@ const (
 var ReplyContents = []string{
 	"谢谢分享！",
 	"感谢分享！！",
-	"谢谢分享！！！",
-	"看着不错",
-	"可以看看",
-	"看看看看",
+	"顶楼主，谢谢！！！",
+	"支持楼主一波！",
+	"必需支持！",
+	"支持楼主，非常感谢！",
 }
 
 // 全局变量，用于存储日志文件
@@ -728,10 +728,15 @@ func (b *Browser) GetFirstPost() (title string, href string, err error) {
 		for _, node := range s.Nodes {
 			if node.Type == html.CommentNode && strings.Contains(node.Data, "广告连接") {
 				// 从该注释节点向后查找第一个符合条件的 tr
-				target = s.NextFiltered("tr.tr3.t_one").First()
-				if target.Length() > 0 {
-					found = true
-					return false // 找到后退出遍历
+				for i := 0; i < 5; i++ {
+					target = s.NextFiltered("tr.tr3.t_one").Eq(i)
+					if sectionHasAdmin(target) {
+						continue
+					}
+					if target.Length() > 0 {
+						found = true
+						return false // 找到后退出遍历
+					}
 				}
 			}
 		}
@@ -752,6 +757,16 @@ func (b *Browser) GetFirstPost() (title string, href string, err error) {
 		return "", "", errors.New("帖子链接中没有 href 属性")
 	}
 	return title, href, nil
+}
+
+func sectionHasAdmin(section *goquery.Selection) bool {
+	for _, node := range section.Nodes {
+		log.Printf("节点数据: %s", node.Data)
+		if strings.Contains(node.Data, "admin") {
+			return true
+		}
+	}
+	return false
 }
 
 // 检查登陆状态是否有效，若无效则执行登陆并加载cookie
