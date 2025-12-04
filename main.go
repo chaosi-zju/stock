@@ -10,14 +10,12 @@ import (
 	"math/rand/v2"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -60,6 +58,7 @@ var (
 	scheduler       *cron.Cron
 	retryTimer      *time.Timer
 	todayRetryTimes int
+	userName        string
 )
 
 // env变量
@@ -94,10 +93,27 @@ func init() {
 		log.Fatalf("加载 .env 文件失败: %v", err)
 	}
 
+	// 提取用户名
+	if os.Getenv("RUN_MODE") == "finishNewManTask" {
+		userName = os.Getenv("NEWMAN_USERNAME")
+	} else {
+		userNamesEnv := os.Getenv("FORUM_USERNAME")
+		userNameSlice := strings.Split(userNamesEnv, ",")
+		hour := (time.Now().Hour() + 8) % 24
+		if hour < len(userNameSlice) {
+			userName = userNameSlice[hour]
+		} else {
+			log.Printf("用户名数量不足，当前时间为 %d 时，实际有 %d 个用户名", hour, len(userNameSlice))
+		}
+	}
+
 	// 初始化配置变量
 	BaseURL = os.Getenv("BASE_URL")
 	LoginSection = os.Getenv("LOGIN_SECTION")
 	ReplySection = os.Getenv("REPLY_SECTION")
+	if os.Getenv("RUN_MODE") == "finishNewManTask" {
+		ReplySection = os.Getenv("NEWMAN_SECTION")
+	}
 	CheckInSection = os.Getenv("CHECK_IN_SECTION")
 	UserInfoSection = os.Getenv("USER_INFO_SECTION")
 
@@ -728,9 +744,11 @@ func (b *Browser) GetFirstPost() (title string, href string, err error) {
 		for _, node := range s.Nodes {
 			if node.Type == html.CommentNode && strings.Contains(node.Data, "广告连接") {
 				// 从该注释节点向后查找第一个符合条件的 tr
-				for i := 0; i < 5; i++ {
+				for i := 0; i <= 5; i++ {
 					target = s.NextFiltered("tr.tr3.t_one").Eq(i)
-					if sectionHasAdmin(target) {
+					targetHTML, _ := target.Html()
+					if strings.Contains(targetHTML, "admin") {
+						log.Printf("跳过包含 admin 的帖子: %s", targetHTML)
 						continue
 					}
 					if target.Length() > 0 {
@@ -759,14 +777,75 @@ func (b *Browser) GetFirstPost() (title string, href string, err error) {
 	return title, href, nil
 }
 
-func sectionHasAdmin(section *goquery.Selection) bool {
-	for _, node := range section.Nodes {
-		log.Printf("节点数据: %s", node.Data)
-		if strings.Contains(node.Data, "admin") {
+// GetIndexedPost 从页面 HTML 中提取“广告连接”后第 index 个符合条件的帖子数据
+func (b *Browser) GetIndexedPost(index int) (pre int, title string, href string, err error) {
+	// 访问论坛回帖页面
+	replyURL := BaseURL + ReplySection
+	// 访问论坛回帖页面并提取帖子数据
+	if err = b.NavigateTo(replyURL); err != nil {
+		log.Printf("导航回帖页失败: %v", err)
+		return
+	}
+	if err = b.WaitForElement(ContentSelector); err != nil {
+		log.Printf("等待元素失败: %v", err)
+		return
+	}
+	htmlContent, err := b.GetHTML("body")
+	if err != nil {
+		log.Printf("获取HTML失败: %v", err)
+		return
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
+	if err != nil {
+		return index, "", "", err
+	}
+
+	// 定位 table#ajaxtable 下的第二个 tbody
+	tbody := doc.Find("table#ajaxtable tbody").Eq(1)
+	if tbody.Length() == 0 {
+		return index, "", "", errors.New("未找到第二个 tbody")
+	}
+
+	var target *goquery.Selection
+	found := false
+	// 遍历 tbody 的所有子节点，查找注释节点包含“广告连接”
+	tbody.Contents().EachWithBreak(func(i int, s *goquery.Selection) bool {
+		if i <= index {
 			return true
 		}
+		// 从该节点向后查找第一个符合条件的 tr
+		target = s.NextFiltered("tr.tr3.t_one").First()
+		targetHTML, _ := target.Html()
+		if targetHTML == "" {
+			return true
+		}
+		if strings.Contains(targetHTML, "admin") {
+			log.Printf("跳过包含 admin 的帖子: %s", targetHTML)
+			return true
+		}
+		if target.Length() > 0 {
+			pre = i
+			found = true
+			return false // 找到后退出遍历
+		}
+		return true
+	})
+	if !found || target == nil || target.Length() == 0 {
+		return index, "", "", errors.New("未找到广告连接后的帖子")
 	}
-	return false
+
+	// 根据帖子的结构，假设帖子的标题链接在 target 内的 a.subject 中
+	a := target.Find("a.subject").First()
+	if a.Length() == 0 {
+		return index, "", "", errors.New("未找到帖子的链接元素")
+	}
+	title = strings.TrimSpace(a.Text())
+	href, exists := a.Attr("href")
+	if !exists {
+		return index, "", "", errors.New("帖子链接中没有 href 属性")
+	}
+	return pre, title, href, nil
 }
 
 // 检查登陆状态是否有效，若无效则执行登陆并加载cookie
@@ -847,7 +926,7 @@ func (b *Browser) Login() error {
 	}
 
 	err := b.Execute(
-		chromedp.SendKeys(`//*[@id="main"]/form/div/table/tbody/tr/td/div/dl[1]/dd/input`, os.Getenv("FORUM_USERNAME")),
+		chromedp.SendKeys(`//*[@id="main"]/form/div/table/tbody/tr/td/div/dl[1]/dd/input`, userName),
 		chromedp.SendKeys(`//*[@id="main"]/form/div/table/tbody/tr/td/div/dl[2]/dd/input`, os.Getenv("FORUM_PASSWORD")),
 		chromedp.SetValue(
 			`//*[@id="main"]/form/div/table/tbody/tr/td/div/dl[3]/dd/select`,
@@ -1076,79 +1155,87 @@ func SendTelegramNotification(message string) error {
 	return nil
 }
 
+func finishNewManTask() {
+	// 创建浏览器实例
+	browser, err := NewBrowser()
+	if err != nil {
+		log.Printf("创建浏览器实例失败: %v", err)
+		scheduleRetry("创建浏览器失败: " + err.Error())
+		return
+	}
+
+	// 确保无论如何浏览器都会被关闭
+	browserClosed := false
+	defer func() {
+		if !browserClosed {
+			log.Println("关闭浏览器实例...")
+			browser.Close()
+		}
+	}()
+
+	// 1. 访问论坛回帖页面
+	replyURL := BaseURL + ReplySection
+	if err = browser.NavigateTo(replyURL); err != nil {
+		log.Printf("导航回帖页失败: %v", err)
+		scheduleRetry("导航回帖页失败: " + err.Error())
+		return
+	}
+
+	// 2. 检查登陆状态
+	if err = browser.CheckLoginStatus(); err != nil {
+		log.Printf("检查登陆状态出错：%v", err)
+		scheduleRetry("检查登陆状态出错: " + err.Error())
+		return
+	}
+
+	pre := 0
+	for i := 0; i < 25; i++ {
+		if err = browser.NavigateTo(replyURL); err != nil {
+			log.Printf("导航回帖页失败: %v", err)
+			scheduleRetry("导航回帖页失败: " + err.Error())
+			return
+		}
+
+		// 3. 获取第一个符合条件的帖子数据
+		newPre, postTitle, href, err := browser.GetIndexedPost(pre)
+		if err != nil {
+			log.Printf("提取数据失败: %v", err)
+			scheduleRetry("提取数据失败: " + err.Error())
+			return
+		}
+		if newPre == pre {
+			log.Printf("未找到新帖子，已遍历所有帖子")
+			break
+		}
+		pre = newPre
+
+		// 4. 打开帖子
+		fullURL := BaseURL + href
+		if err = browser.NavigateTo(fullURL); err != nil {
+			log.Printf("打开帖子失败: %v", err)
+			scheduleRetry("打开帖子失败: " + err.Error())
+			return
+		}
+
+		// 5. 回帖
+		replyContent, err := browser.ReplyPost()
+		if err != nil {
+			log.Printf("回帖失败: %v", err)
+			scheduleRetry("回帖失败: " + err.Error())
+			return
+		}
+		log.Printf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
+		ns := rand.IntN(10) + 15
+		time.Sleep(time.Duration(ns) * time.Second)
+	}
+}
+
 func main() {
-	// // 随机睡眠 0~120 秒
-	// rand.Seed(time.Now().UnixNano())
-	// delay := rand.Intn(WaitingTime)
-	// log.Printf("等待 %d 秒后开始执行", delay)
-	// time.Sleep(time.Duration(delay) * time.Second)
-
-	// // 创建浏览器实例
-	// browser, err := NewBrowser()
-	// if err != nil {
-	// 	log.Fatalf("无法创建浏览器实例: %v", err)
-	// }
-	// defer browser.Close()
-
-	// // 访问论坛回帖页面
-	// replyURL := BaseURL + ReplySection
-	// if err = browser.NavigateTo(replyURL); err != nil {
-	// 	log.Printf("导航回帖页失败: %v", err)
-	// 	return
-	// }
-	// // 检查登陆状态
-	// if err = browser.CheckLoginStatus(); err != nil {
-	// 	log.Printf("检查登陆状态出错：%v", err)
-	// 	return
-	// }
-
-	// // 访问论坛回帖页面并提取帖子数据
-	// if err = browser.NavigateTo(replyURL); err != nil {
-	// 	log.Printf("导航回帖页失败: %v", err)
-	// 	return
-	// }
-	// if err = browser.WaitForElement(ContentSelector); err != nil {
-	// 	log.Printf("等待元素失败: %v", err)
-	// 	return
-	// }
-	// htmlContent, err := browser.GetHTML("body")
-	// if err != nil {
-	// 	log.Printf("获取HTML失败: %v", err)
-	// 	return
-	// }
-	// title, href, err := GetFirstPost(htmlContent)
-	// if err != nil {
-	// 	log.Printf("提取数据失败: %v", err)
-	// 	return
-	// }
-	// log.Printf("找到帖子：%s, 链接：%s", title, href)
-	// fullURL := BaseURL + href
-	// if err = browser.NavigateTo(fullURL); err != nil {
-	// 	log.Printf("打开帖子失败: %v", err)
-	// 	return
-	// }
-
-	// // 回帖
-	// if err = browser.ReplyPost(); err != nil {
-	// 	log.Printf("回帖失败: %v", err)
-	// 	return
-	// }
-
-	// // 签到
-	// checkInResult, err := browser.CheckIn()
-	// if err != nil {
-	// 	log.Printf("签到失败: %v", err)
-	// 	return
-	// }
-
-	// // 打印今天的日期，以及签到成功的信息
-	// successMsg := fmt.Sprintf("%s 签到结果：%s", time.Now().Format("2006-01-02"), checkInResult)
-	// // 发送 Telegram 通知
-	// if err := SendTelegramNotification(successMsg); err != nil {
-	// 	log.Printf("发送 Telegram 通知失败: %v", err)
-	// }
-
 	log.Println("程序启动...")
+	if userName == "" {
+		log.Println("未配置用户名...")
+		return
+	}
 
 	// 初始化签到状态变量
 	todayCheckInSuccess = false
@@ -1162,27 +1249,10 @@ func main() {
 
 	// 如果配置了立即执行任务，则立即执行一次
 	if RunOnStart {
-		executeTask()
-
-		// 如果配置了定时任务，才启动调度器
-		if EnableCron {
-			startScheduler()
-
-			// 设置信号处理
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
-			// 保持程序运行
-			log.Println("程序已启动，按Ctrl+C停止")
-
-			// 等待中断信号
-			<-c
-			log.Println("收到退出信号，正在清理资源...")
-
-			// 停止调度器
-			if scheduler != nil {
-				scheduler.Stop()
-			}
+		if os.Getenv("RUN_MODE") == "finishNewManTask" {
+			finishNewManTask()
+		} else {
+			executeTask()
 		}
 	}
 
