@@ -1236,6 +1236,7 @@ func main() {
 		log.Println("未配置用户名...")
 		return
 	}
+	log.Println("签到用户名: " + userName)
 
 	// 初始化签到状态变量
 	todayCheckInSuccess = false
