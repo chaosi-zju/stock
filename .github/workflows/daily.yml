@@ -2,7 +2,7 @@ name: Daily Job
 on:
   schedule:
     # Run this workflow "At xx:30 UTC every day"
-    - cron: '30 16,17 * * *'
+    - cron: '30 16,17,18,19,20 * * *'
   push:
 
 jobs:
