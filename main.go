@@ -1188,8 +1188,8 @@ func finishNewManTask() {
 		return
 	}
 
-	pre := 0
-	for i := 0; i < 25; i++ {
+	pre := 8
+	for i := 0; i < 30; i++ {
 		if err = browser.NavigateTo(replyURL); err != nil {
 			log.Printf("导航回帖页失败: %v", err)
 			scheduleRetry("导航回帖页失败: " + err.Error())
@@ -1225,7 +1225,7 @@ func finishNewManTask() {
 			return
 		}
 		log.Printf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
-		ns := rand.IntN(10) + 15
+		ns := rand.IntN(5) + 15
 		time.Sleep(time.Duration(ns) * time.Second)
 	}
 }
@@ -1251,7 +1251,12 @@ func main() {
 	// 如果配置了立即执行任务，则立即执行一次
 	if RunOnStart {
 		if os.Getenv("RUN_MODE") == "finishNewManTask" {
-			finishNewManTask()
+			time.Sleep(1 * time.Hour)
+			users := strings.Split(userName, ",")
+			for _, u := range users {
+				userName = u
+				finishNewManTask()
+			}
 		} else {
 			executeTask()
 		}
