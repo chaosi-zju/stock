@@ -2,13 +2,17 @@ name: Daily Job
 on:
   schedule:
     # Run this workflow "At xx:30 UTC every day"
-    - cron: '30 16,17,18,19,20 * * *'
+    - cron: '10 16 * * *'
   push:
 
 jobs:
   daily-hjd:
     name: daily hjd
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [ 南方风风, 臭屁鸡蛋, 叮叮咚呛, 皮蛋肥肉, 八角铃铛, 火炮千斤, 万灵伏威, 诗与江南, 福禄兄弟, 淬星耀世, 神树通天, 王者之锤 ]
     steps:
       - name: install chromium
         run: |
@@ -22,10 +26,10 @@ jobs:
           fetch-depth: 0
       - name: Run auto login
         env:
-          FORUM_USERNAME: ${{ secrets.FORUM_USERNAME }}
           FORUM_PASSWORD: ${{ secrets.FORUM_PASSWORD }}
           SECURITY_QUESTION: ${{ secrets.SECURITY_QUESTION }}
           SECURITY_ANSWER: ${{ secrets.SECURITY_ANSWER }}
           CHROME_PATH: ${{ secrets.CHROME_PATH }}
         run: |
+          export FORUM_USERNAME=${{ matrix.name }}
           go run ./main.go
