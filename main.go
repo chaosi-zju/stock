@@ -97,14 +97,7 @@ func init() {
 	if os.Getenv("RUN_MODE") == "finishNewManTask" {
 		userName = os.Getenv("NEWMAN_USERNAME")
 	} else {
-		userNamesEnv := os.Getenv("FORUM_USERNAME")
-		userNameSlice := strings.Split(userNamesEnv, ",")
-		hour := (time.Now().Hour() + 8) % 24
-		if hour < len(userNameSlice) {
-			userName = userNameSlice[hour]
-		} else {
-			log.Printf("用户名数量不足，当前时间为 %d 时，实际有 %d 个用户名", hour, len(userNameSlice))
-		}
+		userName = os.Getenv("FORUM_USERNAME")
 	}
 
 	// 初始化配置变量
@@ -268,13 +261,13 @@ func executeTask() {
 	if isTaskRunning {
 		log.Println("任务已在运行中，跳过本次执行")
 		taskMutex.Unlock()
-		return
+		os.Exit(2)
 	}
 	// 如果距离上次执行时间不足5分钟，跳过本次执行
 	if !lastRunTime.IsZero() && time.Since(lastRunTime) < 5*time.Minute {
 		log.Printf("距离上次执行仅 %v，小于5分钟，跳过本次执行", time.Since(lastRunTime))
 		taskMutex.Unlock()
-		return
+		os.Exit(3)
 	}
 
 	// 获取当前日期
@@ -290,7 +283,7 @@ func executeTask() {
 	// 如果今天已经成功签到，直接返回，不执行任务
 	if todayCheckInSuccess {
 		taskMutex.Unlock()
-		return
+		os.Exit(4)
 	}
 
 	// 更新任务状态
@@ -316,8 +309,10 @@ func executeTask() {
 	browser, err := NewBrowser()
 	if err != nil {
 		log.Printf("创建浏览器实例失败: %v", err)
-		scheduleRetry("创建浏览器失败: " + err.Error())
-		return
+		success := scheduleRetry("创建浏览器失败: " + err.Error())
+		if !success {
+			os.Exit(5)
+		}
 	}
 
 	// 确保无论如何浏览器都会被关闭
@@ -333,39 +328,49 @@ func executeTask() {
 	replyURL := BaseURL + ReplySection
 	if err = browser.NavigateTo(replyURL); err != nil {
 		log.Printf("导航回帖页失败: %v", err)
-		scheduleRetry("导航回帖页失败: " + err.Error())
-		return
+		success := scheduleRetry("导航回帖页失败: " + err.Error())
+		if !success {
+			os.Exit(6)
+		}
 	}
 
 	// 2. 检查登陆状态
 	if err = browser.CheckLoginStatus(); err != nil {
 		log.Printf("检查登陆状态出错：%v", err)
-		scheduleRetry("检查登陆状态出错: " + err.Error())
-		return
+		success := scheduleRetry("检查登陆状态出错: " + err.Error())
+		if !success {
+			os.Exit(7)
+		}
 	}
 
 	// 3. 获取第一个符合条件的帖子数据
 	postTitle, href, err := browser.GetFirstPost()
 	if err != nil {
 		log.Printf("提取数据失败: %v", err)
-		scheduleRetry("提取数据失败: " + err.Error())
-		return
+		success := scheduleRetry("提取数据失败: " + err.Error())
+		if !success {
+			os.Exit(8)
+		}
 	}
 
 	// 4. 打开帖子
 	fullURL := BaseURL + href
 	if err = browser.NavigateTo(fullURL); err != nil {
 		log.Printf("打开帖子失败: %v", err)
-		scheduleRetry("打开帖子失败: " + err.Error())
-		return
+		success := scheduleRetry("打开帖子失败: " + err.Error())
+		if !success {
+			os.Exit(9)
+		}
 	}
 
 	// 5. 回帖
 	replyContent, err := browser.ReplyPost()
 	if err != nil {
 		log.Printf("回帖失败: %v", err)
-		scheduleRetry("回帖失败: " + err.Error())
-		return
+		success := scheduleRetry("回帖失败: " + err.Error())
+		if !success {
+			os.Exit(10)
+		}
 	}
 	log.Printf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
 
@@ -373,8 +378,10 @@ func executeTask() {
 	checkInResult, err := browser.CheckIn()
 	if err != nil {
 		log.Printf("签到失败: %v", err)
-		scheduleRetry("签到失败: " + err.Error())
-		return
+		success := scheduleRetry("签到失败: " + err.Error())
+		if !success {
+			os.Exit(11)
+		}
 	}
 	todayCheckInSuccess = strings.Contains(checkInResult, "签到成功") || strings.Contains(checkInResult, "今日已经签到")
 
@@ -418,7 +425,7 @@ func executeTask() {
 }
 
 // scheduleRetry 安排任务重试
-func scheduleRetry(reason string) {
+func scheduleRetry(reason string) (success bool) {
 	todayRetryTimes++
 	// 获取当前日期
 	currentDate := time.Now().Format("2006-01-02")
@@ -468,7 +475,6 @@ func scheduleRetry(reason string) {
 		reason,
 		int(RetryInterval.Minutes()),
 	)
-	log.Printf("发送失败通知: %s", failureMsg)
 
 	// 发送失败通知
 	if EnableTelegram {
@@ -478,6 +484,8 @@ func scheduleRetry(reason string) {
 	} else {
 		log.Printf("发送失败通知: %s", failureMsg)
 	}
+
+	return true
 }
 
 // startScheduler 启动定时调度器
@@ -1234,7 +1242,7 @@ func main() {
 	log.Println("程序启动...")
 	if userName == "" {
 		log.Println("未配置用户名...")
-		return
+		os.Exit(1)
 	}
 	log.Println("签到用户名: " + userName)
 
