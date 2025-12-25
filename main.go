@@ -459,7 +459,7 @@ func scheduleRetry(reason string) (success bool) {
 			return
 		}
 
-		if todayRetryTimes > 3 {
+		if todayRetryTimes > 2 {
 			log.Printf("已重试 %d 次，仍未成功签到，放弃重试", todayRetryTimes)
 			return
 		}
@@ -1082,6 +1082,10 @@ func (b *Browser) CheckIn() (string, error) {
 		return "", err
 	}
 	log.Printf("%s 签到结果：%s", time.Now().Format("2006-01-02"), resultText)
+
+	if !strings.Contains(resultText, "签到成功") {
+		return resultText, fmt.Errorf("签到结果为：%s", resultText)
+	}
 	return resultText, nil
 }
 
@@ -1266,6 +1270,8 @@ func main() {
 				finishNewManTask()
 			}
 		} else {
+			ns := rand.IntN(60)
+			time.Sleep(time.Duration(ns) * time.Second)
 			executeTask()
 		}
 	}
