@@ -24,7 +24,7 @@ jobs:
         with:
           ref: hjd
           fetch-depth: 0
-      - name: [关键] Run auto login
+      - name: 关键 Run auto login
         env:
           FORUM_PASSWORD: ${{ secrets.FORUM_PASSWORD }}
           SECURITY_QUESTION: ${{ secrets.SECURITY_QUESTION }}
