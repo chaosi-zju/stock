@@ -34,5 +34,5 @@ jobs:
           export FORUM_USERNAME=${{ matrix.name }}
           go run ./main.go
           if [ $? -ne 0 ]; then
-            exit 1
+            exit $?
           fi
