@@ -261,13 +261,13 @@ func executeTask() {
 	if isTaskRunning {
 		log.Println("任务已在运行中，跳过本次执行")
 		taskMutex.Unlock()
-		os.Exit(2)
+		return
 	}
 	// 如果距离上次执行时间不足5分钟，跳过本次执行
 	if !lastRunTime.IsZero() && time.Since(lastRunTime) < 5*time.Minute {
 		log.Printf("距离上次执行仅 %v，小于5分钟，跳过本次执行", time.Since(lastRunTime))
 		taskMutex.Unlock()
-		os.Exit(3)
+		return
 	}
 
 	// 获取当前日期
@@ -283,7 +283,7 @@ func executeTask() {
 	// 如果今天已经成功签到，直接返回，不执行任务
 	if todayCheckInSuccess {
 		taskMutex.Unlock()
-		os.Exit(4)
+		return
 	}
 
 	// 更新任务状态
@@ -309,10 +309,7 @@ func executeTask() {
 	browser, err := NewBrowser()
 	if err != nil {
 		log.Printf("创建浏览器实例失败: %v", err)
-		success := scheduleRetry("创建浏览器失败: " + err.Error())
-		if !success {
-			os.Exit(5)
-		}
+		os.Exit(5)
 	}
 
 	// 确保无论如何浏览器都会被关闭
@@ -328,49 +325,34 @@ func executeTask() {
 	replyURL := BaseURL + ReplySection
 	if err = browser.NavigateTo(replyURL); err != nil {
 		log.Printf("导航回帖页失败: %v", err)
-		success := scheduleRetry("导航回帖页失败: " + err.Error())
-		if !success {
-			os.Exit(6)
-		}
+		os.Exit(6)
 	}
 
 	// 2. 检查登陆状态
 	if err = browser.CheckLoginStatus(); err != nil {
 		log.Printf("检查登陆状态出错：%v", err)
-		success := scheduleRetry("检查登陆状态出错: " + err.Error())
-		if !success {
-			os.Exit(7)
-		}
+		os.Exit(7)
 	}
 
 	// 3. 获取第一个符合条件的帖子数据
 	postTitle, href, err := browser.GetFirstPost()
 	if err != nil {
 		log.Printf("提取数据失败: %v", err)
-		success := scheduleRetry("提取数据失败: " + err.Error())
-		if !success {
-			os.Exit(8)
-		}
+		os.Exit(8)
 	}
 
 	// 4. 打开帖子
 	fullURL := BaseURL + href
 	if err = browser.NavigateTo(fullURL); err != nil {
 		log.Printf("打开帖子失败: %v", err)
-		success := scheduleRetry("打开帖子失败: " + err.Error())
-		if !success {
-			os.Exit(9)
-		}
+		os.Exit(9)
 	}
 
 	// 5. 回帖
 	replyContent, err := browser.ReplyPost()
 	if err != nil {
 		log.Printf("回帖失败: %v", err)
-		success := scheduleRetry("回帖失败: " + err.Error())
-		if !success {
-			os.Exit(10)
-		}
+		os.Exit(10)
 	}
 	log.Printf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
 
@@ -378,10 +360,7 @@ func executeTask() {
 	checkInResult, err := browser.CheckIn()
 	if err != nil {
 		log.Printf("签到失败: %v", err)
-		success := scheduleRetry("签到失败: " + err.Error())
-		if !success {
-			os.Exit(11)
-		}
+		os.Exit(11)
 	}
 	todayCheckInSuccess = strings.Contains(checkInResult, "签到成功") || strings.Contains(checkInResult, "今日已经签到")
 
@@ -1083,7 +1062,7 @@ func (b *Browser) CheckIn() (string, error) {
 	}
 	log.Printf("%s 签到结果：%s", time.Now().Format("2006-01-02"), resultText)
 
-	if !strings.Contains(resultText, "签到成功") {
+	if !(strings.Contains(resultText, "签到成功") || strings.Contains(resultText, "今日已经签到")) {
 		return resultText, fmt.Errorf("签到结果为：%s", resultText)
 	}
 	return resultText, nil
@@ -1263,7 +1242,6 @@ func main() {
 	// 如果配置了立即执行任务，则立即执行一次
 	if RunOnStart {
 		if os.Getenv("RUN_MODE") == "finishNewManTask" {
-			time.Sleep(1 * time.Hour)
 			users := strings.Split(userName, ",")
 			for _, u := range users {
 				userName = u
