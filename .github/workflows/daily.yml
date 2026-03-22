@@ -58,10 +58,11 @@ jobs:
           
           # 输出延迟秒数供后续步骤使用
           echo "delay_seconds=$DELAY_SECONDS" >> $GITHUB_OUTPUT
+          echo "user_index=$INDEX" >> $GITHUB_OUTPUT
 
       - name: Wait until scheduled time
         run: |
-          echo "等待 ${{ steps.calculate_time.outputs.delay_seconds }} 秒后执行..."
+          echo "等待 ${{ steps.calculate_time.outputs.user_index }} 小时后执行..."
           sleep ${{ steps.calculate_time.outputs.delay_seconds }}
           echo "等待结束，开始执行任务。"
 
@@ -86,6 +87,7 @@ jobs:
           SECURITY_QUESTION: ${{ secrets.SECURITY_QUESTION }}
         run: |
           export FORUM_USERNAME=${{ matrix.username }}
+          export USER_INDEX=${{ steps.calculate_time.outputs.user_index }} 
           go run ./main.go
           if [ $? -ne 0 ]; then
             exit $?

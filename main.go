@@ -59,6 +59,7 @@ var (
 	retryTimer      *time.Timer
 	todayRetryTimes int
 	userName        string
+	userIndex       int64
 )
 
 // env变量
@@ -98,6 +99,13 @@ func init() {
 		userName = os.Getenv("NEWMAN_USERNAME")
 	} else {
 		userName = os.Getenv("FORUM_USERNAME")
+	}
+
+	// 转换 USER_INDEX 为 int64
+	if userIndexStr := os.Getenv("USER_INDEX"); userIndexStr != "" {
+		if idx, err := strconv.ParseInt(userIndexStr, 10, 64); err == nil {
+			userIndex = idx
+		}
 	}
 
 	// 初始化配置变量
@@ -335,9 +343,19 @@ func executeTask() {
 	}
 
 	// 3. 获取第一个符合条件的帖子数据
-	postTitle, href, err := browser.GetFirstPost()
+	//postTitle, href, err := browser.GetFirstPost()
+	//if err != nil {
+	//	log.Printf("提取数据失败: %v", err)
+	//	os.Exit(8)
+	//}
+	pre := int(8 + userIndex)
+	newPre, postTitle, href, err := browser.GetIndexedPost(pre)
 	if err != nil {
-		log.Printf("提取数据失败: %v", err)
+		log.Printf("获取第一个符合条件的帖子数据失败: %v", err)
+		os.Exit(8)
+	}
+	if newPre == pre {
+		log.Printf("未找到第一个符合条件的帖子数据")
 		os.Exit(8)
 	}
 
@@ -1246,6 +1264,8 @@ func main() {
 			for _, u := range users {
 				userName = u
 				finishNewManTask()
+				log.Printf("Finish process %s's task\n\n\n", userName)
+				time.Sleep(20 * time.Minute)
 			}
 		} else {
 			ns := rand.IntN(60)
