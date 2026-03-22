@@ -1,7 +1,7 @@
 name: Daily Job
 on:
   schedule:
-    # Run this workflow "At xx:30 UTC every day"
+    # Run this workflow "At 00:10 UTC every day"
     - cron: '10 16 * * *'
   push:
 
@@ -12,8 +12,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [ 南方风风, 臭屁鸡蛋, 叮叮咚呛, 皮蛋肥肉, 八角铃铛, 火炮千斤, 万灵伏威, 诗与江南, 福禄兄弟, 淬星耀世, 神树通天, 王者之锤 ]
+        username: ${{ fromJSON(secrets.USERNAMES) }}
     steps:
+      - name: Calculate Scheduled Time for ${{ matrix.username }}
+        id: calculate_time
+        run: |
+          # 计算用户名的索引（从0开始）
+          USERNAME_LIST='${{ toJSON(matrix.username) }}'
+          readarray -t ARR <<< "$(echo "$USERNAME_LIST" | jq -r '.[]')"
+          INDEX=-1
+          for i in "${!ARR[@]}"; do
+            if [[ "${ARR[$i]}" == "${{ matrix.username }}" ]]; then
+                INDEX=$i
+                break
+            fi
+          done
+          
+          # 计算延迟时间（秒）：索引 * 间隔（例如60*60秒）
+          DELAY_SECONDS=$(( INDEX * 60 * 60 ))
+          
+          # 计算目标执行时间（北京时间，UTC+8）
+          TARGET_TIME_BEIJING=$(date -u -d "@$(($(date -u +%s) + DELAY_SECONDS + 8 * 3600))" "+%Y-%m-%d %H:%M:%S")
+          
+          echo "用户名: ${{ matrix.username }}"
+          echo "在列表中的位置: $((INDEX + 1))"
+          echo "计划执行时间 (北京时间): $TARGET_TIME_BEIJING"
+          
+          # 输出延迟秒数供后续步骤使用
+          echo "delay_hour=$INDEX" >> $GITHUB_OUTPUT
+      - name: Wait until scheduled time
+        run: |
+          echo "等待 ${{ steps.calculate_time.outputs.delay_hour }} 小时后执行..."
+          sleep ${{ steps.calculate_time.outputs.delay_hour }}
+          echo "等待结束，开始执行任务。"
       - name: install chromium
         run: |
           sudo apt-get update
@@ -28,10 +59,8 @@ jobs:
         env:
           FORUM_PASSWORD: ${{ secrets.FORUM_PASSWORD }}
           SECURITY_QUESTION: ${{ secrets.SECURITY_QUESTION }}
-          SECURITY_ANSWER: ${{ secrets.SECURITY_ANSWER }}
-          CHROME_PATH: ${{ secrets.CHROME_PATH }}
         run: |
-          export FORUM_USERNAME=${{ matrix.name }}
+          export FORUM_USERNAME=${{ matrix.username }}
           go run ./main.go
           if [ $? -ne 0 ]; then
             exit $?
