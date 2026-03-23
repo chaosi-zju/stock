@@ -1,0 +1,51 @@
+name: Reusable HJD Login
+
+on:
+  workflow_call:
+    inputs:
+      forum_username:
+        required: true
+        type: string
+      user_index:
+        required: true
+        type: string
+    secrets:
+      FORUM_PASSWORD:
+        required: true
+      SECURITY_QUESTION:
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-22.04
+    env:
+      FORUM_USERNAME: ${{ inputs.forum_username }}
+      USER_INDEX: ${{ inputs.user_index }}
+
+    steps:
+      - name: Install Chromium (snap only, avoid conflict)
+        run: |
+          sudo snap install chromium --classic
+
+      - name: Set up Go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: hjd
+          fetch-depth: 0
+
+      - name: Run Auto Login
+        env:
+          FORUM_PASSWORD: ${{ secrets.FORUM_PASSWORD }}
+          SECURITY_QUESTION: ${{ secrets.SECURITY_QUESTION }}
+        run: |
+          echo "用户名: ${FORUM_USERNAME}"
+          echo "序号: ${USER_INDEX}"
+          go run ./main.go
+          if [ $? -ne 0 ]; then
+            exit $?
+          fi
