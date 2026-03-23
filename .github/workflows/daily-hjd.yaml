@@ -23,7 +23,7 @@ on:
 
 jobs:
   hjd-user-0:
-    name: hjd user 0
+    name: 屿安7392
     if: (github.event_name == 'schedule' && github.event.schedule == '10 16 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
@@ -32,8 +32,8 @@ jobs:
     secrets: inherit
 
   hjd-user-1:
-    name: hjd user 1
-    if: github.event_name == 'schedule' && github.event.schedule == '10 17 * * *'
+    name: 砚迟1854
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 17 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 砚迟1854
@@ -41,8 +41,8 @@ jobs:
     secrets: inherit
 
   hjd-user-2:
-    name: hjd user 2
-    if: github.event_name == 'schedule' && github.event.schedule == '10 18 * * *'
+    name: 芥川6207
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 18 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 芥川6207
@@ -50,8 +50,8 @@ jobs:
     secrets: inherit
 
   hjd-user-3:
-    name: hjd user 3
-    if: github.event_name == 'schedule' && github.event.schedule == '10 19 * * *'
+    name: 栖野3915
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 19 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 栖野3915
@@ -59,8 +59,8 @@ jobs:
     secrets: inherit
 
   hjd-user-4:
-    name: hjd user 4
-    if: github.event_name == 'schedule' && github.event.schedule == '10 20 * * *'
+    name: 鹿杳8426
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 20 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 鹿杳8426
@@ -68,8 +68,8 @@ jobs:
     secrets: inherit
 
   hjd-user-5:
-    name: hjd user 5
-    if: github.event_name == 'schedule' && github.event.schedule == '10 21 * * *'
+    name: 汀禾5179
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 21 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 汀禾5179
@@ -77,8 +77,8 @@ jobs:
     secrets: inherit
 
   hjd-user-6:
-    name: hjd user 6
-    if: github.event_name == 'schedule' && github.event.schedule == '10 22 * * *'
+    name: 神树通天
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 22 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 神树通天
@@ -86,8 +86,8 @@ jobs:
     secrets: inherit
 
   hjd-user-7:
-    name: hjd user 7
-    if: github.event_name == 'schedule' && github.event.schedule == '10 23 * * *'
+    name: 松见2640
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 23 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 松见2640
@@ -95,8 +95,8 @@ jobs:
     secrets: inherit
 
   hjd-user-8:
-    name: hjd user 8
-    if: github.event_name == 'schedule' && github.event.schedule == '10 00 * * *'
+    name: 云杪9731
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 00 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 云杪9731
@@ -104,8 +104,8 @@ jobs:
     secrets: inherit
 
   hjd-user-9:
-    name: hjd user 9
-    if: github.event_name == 'schedule' && github.event.schedule == '10 01 * * *'
+    name: 尘叙4085
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 01 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 尘叙4085
@@ -113,8 +113,8 @@ jobs:
     secrets: inherit
 
   hjd-user-10:
-    name: hjd user 10
-    if: github.event_name == 'schedule' && github.event.schedule == '10 02 * * *'
+    name: 星芥1563
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 02 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 星芥1563
@@ -122,8 +122,8 @@ jobs:
     secrets: inherit
 
   hjd-user-11:
-    name: hjd user 11
-    if: github.event_name == 'schedule' && github.event.schedule == '10 03 * * *'
+    name: 秋舸7924
+    if: (github.event_name == 'schedule' && github.event.schedule == '10 03 * * *') || (github.event_name == 'push')
     uses: ./.github/workflows/reusable-hjd-login.yaml
     with:
       forum_username: 秋舸7924
