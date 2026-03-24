@@ -1,0 +1,14 @@
+name: 星芥1563
+
+on:
+  schedule:
+    - cron: '10 02 * * *'
+
+jobs:
+  hjd-user:
+    name: 星芥1563
+    uses: ./.github/workflows/reusable-hjd-login.yaml
+    with:
+      forum_username: 星芥1563
+      user_index: '11'
+    secrets: inherit

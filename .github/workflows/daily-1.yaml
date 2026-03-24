@@ -1,0 +1,16 @@
+name: 屿安7392
+
+on:
+  schedule:
+    - cron: '10 16 * * *'
+  push:
+    branches: [main]
+
+jobs:
+  hjd-user:
+    name: 屿安7392
+    uses: ./.github/workflows/reusable-hjd-login.yaml
+    with:
+      forum_username: 屿安7392
+      user_index: '1'
+    secrets: inherit

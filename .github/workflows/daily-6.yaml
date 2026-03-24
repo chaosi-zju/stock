@@ -1,0 +1,14 @@
+name: 汀禾5179
+
+on:
+  schedule:
+    - cron: '10 21 * * *'
+
+jobs:
+  hjd-user:
+    name: 汀禾5179
+    uses: ./.github/workflows/reusable-hjd-login.yaml
+    with:
+      forum_username: 汀禾5179
+      user_index: '6'
+    secrets: inherit
