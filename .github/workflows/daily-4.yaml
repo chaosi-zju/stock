@@ -1,0 +1,14 @@
+name: 栖野3915
+
+on:
+  schedule:
+    - cron: '10 19 * * *'
+
+jobs:
+  hjd-user:
+    name: 栖野3915
+    uses: ./.github/workflows/reusable-hjd-login.yaml
+    with:
+      forum_username: 栖野3915
+      user_index: '4'
+    secrets: inherit
