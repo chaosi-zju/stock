@@ -90,7 +90,7 @@ type Browser struct {
 // init 用于初始化环境变量
 func init() {
 	// 加载 .env 文件
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env.local"); err != nil {
 		log.Fatalf("加载 .env 文件失败: %v", err)
 	}
 
