@@ -1,0 +1,14 @@
+name: 昕玚9570
+
+on:
+  schedule:
+    - cron: '10 12 * * *'
+
+jobs:
+  hjd-user:
+    name: 昕玚9570
+    uses: ./.github/workflows/reusable-hjd-login.yaml
+    with:
+      forum_username: 昕玚9570
+      user_index: '21'
+    secrets: inherit
