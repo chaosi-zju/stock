@@ -1027,10 +1027,12 @@ func (b *Browser) SetCookies() error {
 // replyPost 回帖
 func (b *Browser) ReplyPost() (string, error) {
 	// 等待回帖区域加载
+	log.Printf("--- 开始等待回帖区域加载 (%+v)", time.Now())
 	if err := b.WaitForElement(ThreadTextAreaSelector); err != nil {
-		log.Printf("等待回帖区域加载失败: %v", err)
+		log.Printf("等待回帖区域加载失败: %v (%+v)", err, time.Now())
 		return "", err
 	}
+	log.Printf("--- 完成等待回帖区域加载 (%+v)", time.Now())
 
 	// 随机选择回帖内容
 	replyContent := ReplyContents[time.Now().Unix()%int64(len(ReplyContents))]
