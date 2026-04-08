@@ -679,7 +679,7 @@ func (b *Browser) Close() {
 
 // Execute 用于执行一组 chromedp.Action，并设置一个超时
 func (b *Browser) Execute(actions ...chromedp.Action) error {
-	ctx, cancel := context.WithTimeout(b.ctx, 60*time.Second)
+	ctx, cancel := context.WithTimeout(b.ctx, 120*time.Second)
 	defer cancel()
 	return chromedp.Run(ctx, actions...)
 }
