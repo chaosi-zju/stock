@@ -366,7 +366,7 @@ func executeTask() {
 		os.Exit(9)
 	}
 
-	time.Sleep(10 * time.Second)
+	log.Printf("fullURL: %s", fullURL)
 
 	// 5. 回帖
 	replyContent, err := browser.ReplyPost()
@@ -1032,7 +1032,7 @@ func (b *Browser) ReplyPost() (string, error) {
 	log.Printf("--- 开始等待回帖区域加载 (%+v)", time.Now())
 	if err := b.WaitForElement(ThreadTextAreaSelector); err != nil {
 		log.Printf("等待回帖区域加载失败: %v (%+v)", err, time.Now())
-		//return "", err
+		return "", err
 	}
 	log.Printf("--- 完成等待回帖区域加载 (%+v)", time.Now())
 
