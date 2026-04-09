@@ -1060,10 +1060,14 @@ func (b *Browser) CheckIn() (string, error) {
 	if err := b.NavigateTo(BaseURL + CheckInSection); err != nil {
 		return "", err
 	}
+	log.Printf("CheckInURL: %s", BaseURL+CheckInSection)
 	// 等待签到按钮加载
+	log.Printf("--- 开始等待签到区域加载 (%+v)", time.Now())
 	if err := b.WaitForElement("#submit_bbb"); err != nil {
+		log.Printf("等待签到区域加载失败: %v (%+v)", err, time.Now())
 		return "", err
 	}
+	log.Printf("--- 完成等待签到区域加载 (%+v)", time.Now())
 	// 随机选择一个表情
 	expressions := []string{"kx", "ng", "ym", "wl", "nu", "ch", "fd", "yl", "shuai"}
 	selected := expressions[rand.IntN(len(expressions))]
