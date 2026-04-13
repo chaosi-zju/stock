@@ -714,6 +714,13 @@ func (b *Browser) Input(selector, text string) error {
 	)
 }
 
+func (b *Browser) ClickOnlyPoster() error {
+	return b.Execute(
+		chromedp.WaitVisible(`#go_lastpage`, chromedp.ByID),
+		chromedp.Click(`#go_lastpage`),
+	)
+}
+
 // GetFirstPost 从页面 HTML 中提取“广告连接”后第一个符合条件的帖子数据
 func (b *Browser) GetFirstPost() (title string, href string, err error) {
 	// 访问论坛回帖页面
@@ -941,6 +948,7 @@ func (b *Browser) Login() error {
 			chromedp.BySearch,
 		),
 		chromedp.SendKeys(`//*[@id="main"]/form/div/table/tbody/tr/td/div/dl[4]/dd/input`, os.Getenv("SECURITY_ANSWER")),
+		chromedp.Click(`//input[@name="hideid" and @value="1"]`),
 		chromedp.Click(`//*[@id="main"]/form/div/table/tbody/tr/td/div/dl[7]/dd/input`),
 		// 登录后等待页面切换，等待 header 中出现“退出”
 		chromedp.WaitVisible(`div.header_up_sign`, chromedp.ByQuery),
@@ -1041,6 +1049,11 @@ func (b *Browser) ReplyPost() (string, error) {
 	// 输入回帖内容
 	if err := b.Input(ThreadTextAreaSelector, replyContent); err != nil {
 		log.Printf("输入回帖内容失败: %v", err)
+		return "", err
+	}
+	// 点击回帖仅楼主可见
+	if err := b.ClickOnlyPoster(); err != nil {
+		log.Printf("点击回帖仅楼主可见失败: %v", err)
 		return "", err
 	}
 
