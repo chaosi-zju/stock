@@ -337,7 +337,7 @@ func executeTask() {
 	}
 
 	// 2. 检查登陆状态
-	if err = browser.CheckLoginStatus(); err != nil {
+	if err = browser.Login(); err != nil {
 		log.Printf("检查登陆状态出错：%v", err)
 		os.Exit(7)
 	}
@@ -377,40 +377,40 @@ func executeTask() {
 	log.Printf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
 
 	// 6. 签到
-	checkInResult, err := browser.CheckIn()
-	if err != nil {
-		log.Printf("签到失败: %v", err)
-		os.Exit(11)
-	}
-	todayCheckInSuccess = strings.Contains(checkInResult, "签到成功") || strings.Contains(checkInResult, "今日已经签到")
+	//checkInResult, err := browser.CheckIn()
+	//if err != nil {
+	//	log.Printf("签到失败: %v", err)
+	//	os.Exit(11)
+	//}
+	//todayCheckInSuccess = strings.Contains(checkInResult, "签到成功") || strings.Contains(checkInResult, "今日已经签到")
 
 	// 7. 获取用户信息
-	userInfo, err := browser.GetUserInfo()
-	if err != nil {
-		log.Printf("获取用户信息失败: %v", err)
-		//scheduleRetry("获取用户信息失败: " + err.Error())
-		//return
-	}
-
-	replyInfo := fmt.Sprintf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
+	//userInfo, err := browser.GetUserInfo()
+	//if err != nil {
+	//	log.Printf("获取用户信息失败: %v", err)
+	//	//scheduleRetry("获取用户信息失败: " + err.Error())
+	//	//return
+	//}
+	//
+	//replyInfo := fmt.Sprintf("成功回复帖子: \n标题：%s, \n回帖：%s", postTitle, replyContent)
 
 	//8. 发送通知
-	notificationMsg := fmt.Sprintf(
-		"✅ hjd2048 ✅，\n时间: %s\n%s\n%s\n%s",
-		time.Now().Format("2006-01-02 15:04:05"),
-		replyInfo,
-		checkInResult,
-		userInfo,
-	)
-	if EnableTelegram {
-		if err := SendTelegramNotification(notificationMsg); err != nil {
-			log.Printf("发送通知失败: %v\n通知内容: %s", err, notificationMsg)
-			//scheduleRetry("发送通知失败: " + err.Error())
-			//return
-		}
-	} else {
-		log.Printf("发送通知: %s", notificationMsg)
-	}
+	//notificationMsg := fmt.Sprintf(
+	//	"✅ hjd2048 ✅，\n时间: %s\n%s\n%s\n%s",
+	//	time.Now().Format("2006-01-02 15:04:05"),
+	//	replyInfo,
+	//	checkInResult,
+	//	userInfo,
+	//)
+	//if EnableTelegram {
+	//	if err := SendTelegramNotification(notificationMsg); err != nil {
+	//		log.Printf("发送通知失败: %v\n通知内容: %s", err, notificationMsg)
+	//		//scheduleRetry("发送通知失败: " + err.Error())
+	//		//return
+	//	}
+	//} else {
+	//	log.Printf("发送通知: %s", notificationMsg)
+	//}
 
 	// 任务成功，更新上次成功时间
 	taskMutex.Lock()
@@ -1276,8 +1276,6 @@ func main() {
 				time.Sleep(20 * time.Minute)
 			}
 		} else {
-			ns := rand.IntN(60)
-			time.Sleep(time.Duration(ns) * time.Second)
 			executeTask()
 		}
 	}
