@@ -1,8 +1,7 @@
 name: 砚迟1854
 
 on:
-  schedule:
-    - cron: '10 17 * * *'
+  schedule: []
 
 jobs:
   hjd-user:
