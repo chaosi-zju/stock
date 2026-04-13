@@ -2,7 +2,7 @@ name: 甯炘8426
 
 on:
   schedule:
-    - cron: '10 08 * * *'
+    - cron: '28 17 * * *'
 
 jobs:
   hjd-user:

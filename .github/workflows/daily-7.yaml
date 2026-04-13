@@ -2,7 +2,7 @@ name: 神树通天
 
 on:
   schedule:
-    - cron: '10 22 * * *'
+    - cron: '30 17 * * *'
 
 jobs:
   hjd-user:

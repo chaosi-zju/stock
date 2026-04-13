@@ -2,7 +2,7 @@ name: 昕玚9570
 
 on:
   schedule:
-    - cron: '10 12 * * *'
+    - cron: '48 17 * * *'
 
 jobs:
   hjd-user:

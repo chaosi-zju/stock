@@ -2,7 +2,7 @@ name: 霂琤5701
 
 on:
   schedule:
-    - cron: '10 14 * * *'
+    - cron: '58 17 * * *'
 
 jobs:
   hjd-user:

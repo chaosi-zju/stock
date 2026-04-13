@@ -2,7 +2,7 @@ name: 星芥1563
 
 on:
   schedule:
-    - cron: '10 02 * * *'
+    - cron: '50 17 * * *'
 
 jobs:
   hjd-user:

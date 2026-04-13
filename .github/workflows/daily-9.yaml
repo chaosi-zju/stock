@@ -2,7 +2,7 @@ name: 云杪9731
 
 on:
   schedule:
-    - cron: '10 00 * * *'
+    - cron: '40 17 * * *'
 
 jobs:
   hjd-user:

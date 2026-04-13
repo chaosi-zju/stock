@@ -2,7 +2,7 @@ name: 芥川6207
 
 on:
   schedule:
-    - cron: '10 18 * * *'
+    - cron: '10 17 * * *'
 
 jobs:
   hjd-user:

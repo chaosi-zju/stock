@@ -2,7 +2,7 @@ name: 枍昉2751
 
 on:
   schedule:
-    - cron: '10 09 * * *'
+    - cron: '33 17 * * *'
 
 jobs:
   hjd-user:

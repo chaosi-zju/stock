@@ -2,7 +2,7 @@ name: 洺棽6139
 
 on:
   schedule:
-    - cron: '10 10 * * *'
+    - cron: '38 17 * * *'
 
 jobs:
   hjd-user:
