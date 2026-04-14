@@ -2,7 +2,7 @@ name: 秋舸7924
 
 on:
   schedule:
-    - cron: '55 17 * * *'
+    - cron: '55 16 * * *'
 
 jobs:
   hjd-user:

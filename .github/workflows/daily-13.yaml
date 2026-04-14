@@ -2,7 +2,7 @@ name: 棽珩1842
 
 on:
   schedule:
-    - cron: '08 17 * * *'
+    - cron: '08 16 * * *'
 
 jobs:
   hjd-user:

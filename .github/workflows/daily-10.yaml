@@ -2,7 +2,7 @@ name: 尘叙4085
 
 on:
   schedule:
-    - cron: '45 17 * * *'
+    - cron: '45 16 * * *'
 
 jobs:
   hjd-user:
